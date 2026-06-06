@@ -175,6 +175,14 @@ html, body {
   padding: 0 3px;
   line-height: 1;
 }
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+.nav-btn .badge.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+  transform-origin: center;
+}
 
 /* Settings pinned to bottom */
 .nav-spacer { flex: 1; }
@@ -1909,7 +1917,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2213,10 +2221,12 @@ function updateInboxBadge() {
   if (inboxCount > 0) {
     badge.textContent = inboxCount;
     badge.classList.remove('hidden');
+    badge.classList.add('badge-pulse');
     unreadBadge.classList.remove('hidden');
     countLabel.textContent = inboxCount + ' unread';
   } else {
     badge.classList.add('hidden');
+    badge.classList.remove('badge-pulse');
     unreadBadge.classList.add('hidden');
   }
 }

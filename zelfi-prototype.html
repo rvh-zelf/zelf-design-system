@@ -300,6 +300,14 @@ html, body {
 .step-card[data-type="RESULT"] { border-left: 3px solid var(--green); }
 .step-card[data-type="EVAL"]   { border-left: 3px solid var(--purple); }
 .step-card[data-type="ERROR"]  { border-left: 3px solid var(--red); }
+@keyframes slideIn {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.slide-in {
+  animation: slideIn 300ms ease forwards;
+}
+
 
 .step-summary {
   display: flex;
@@ -1842,7 +1850,7 @@ html, body {
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -1940,7 +1948,7 @@ function sendGoal() {
 
   // Goal header card
   const goalCard = document.createElement('div');
-  goalCard.className = 'goal-header-card';
+  goalCard.className = 'goal-header-card slide-in';
   goalCard.innerHTML = `
     <div class="goal-header-top">
       <span class="ai-label" data-ai-source="Goal" onclick="openPopover(this)"><span class="star">&#10022;</span> AI</span>
@@ -1961,6 +1969,7 @@ function sendGoal() {
   setTimeout(() => {
     const planCard = createStepCard('PLAN', 'plan', 'Working on your goal&hellip;', currentTime(),
       `I&rsquo;m working on this goal now. Breaking it into steps.`);
+    planCard.classList.add('slide-in');
     log.appendChild(planCard);
     expandStepBody(planCard);
     log.scrollTop = log.scrollHeight;
@@ -1971,6 +1980,7 @@ function sendGoal() {
   setTimeout(() => {
     const toolCard = createStepCard('TOOL', 'tool', `browser.search("${escapeHtml(goalText)}")`, currentTime(),
       `<div class="step-mono">browser.search("${escapeHtml(goalText)}")</div>`);
+    toolCard.classList.add('slide-in');
     log.appendChild(toolCard);
     expandStepBody(toolCard);
     log.scrollTop = log.scrollHeight;
@@ -1981,7 +1991,7 @@ function sendGoal() {
   setTimeout(() => {
     document.getElementById('step-counter').textContent = 'Step 3 of ~3';
     const resultCard = document.createElement('div');
-    resultCard.className = 'step-card streaming';
+    resultCard.className = 'step-card streaming slide-in';
     resultCard.setAttribute('data-type', 'RESULT');
     resultCard.innerHTML = `
       <div class="step-summary">

@@ -710,6 +710,14 @@ html, body {
 .history-search-input::placeholder { color: var(--text-3); }
 .history-search-input:focus { border-color: var(--teal); }
 
+.history-no-results {
+  display: none;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
 .history-list {
   padding: 8px 24px;
 }
@@ -1658,6 +1666,8 @@ textarea:focus-visible,
             </div>
           </div>
 
+          <div class="history-no-results" id="history-no-results">No results for your search.</div>
+
         </div>
       </div>
 
@@ -1899,7 +1909,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2393,6 +2403,33 @@ function useExampleGoal(chipEl) {
     } else {
       examples.style.display = 'flex';
     }
+  });
+})();
+
+
+/* ---- Improvement 5: Live history search ---- */
+(function initHistorySearch() {
+  const searchInput = document.querySelector('.history-search-input');
+  const noResults   = document.getElementById('history-no-results');
+  if (!searchInput || !noResults) return;
+
+  searchInput.addEventListener('input', function () {
+    const query = searchInput.value.trim().toLowerCase();
+    const rows  = document.querySelectorAll('#view-history .history-row');
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+      const titleEl = row.querySelector('.history-title');
+      const text    = titleEl ? titleEl.textContent.toLowerCase() : '';
+      if (!query || text.includes(query)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    noResults.style.display = (visibleCount === 0 && query.length > 0) ? 'block' : 'none';
   });
 })();
 

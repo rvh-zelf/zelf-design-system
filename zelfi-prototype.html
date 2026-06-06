@@ -1169,6 +1169,39 @@ textarea:focus-visible,
   outline-offset: 2px;
 }
 
+/* ── Improvement 4: Clickable example goal chips ── */
+#goal-examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px 12px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+#goal-examples .examples-label {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.goal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid rgba(61,219,217,0.4);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--teal);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.goal-chip:hover {
+  background: rgba(61,219,217,0.08);
+  border-color: var(--teal);
+}
+
 </style>
 </head>
 <body>
@@ -1375,6 +1408,13 @@ textarea:focus-visible,
             <button class="btn-send" id="send-btn" onclick="sendGoal()"><span>&#9889;</span> Send</button>
           </div>
           <div class="input-hint">&#8984;+Enter to send &middot; 100% local</div>
+        </div>
+        <!-- Improvement 4: Example goal chips -->
+        <div id="goal-examples">
+          <span class="examples-label">Try:</span>
+          <button class="goal-chip" onclick="useExampleGoal(this)">Research Xneelo hosting pricing</button>
+          <button class="goal-chip" onclick="useExampleGoal(this)">Draft an update for Leoni</button>
+          <button class="goal-chip" onclick="useExampleGoal(this)">Compare CPD platforms</button>
         </div>
       </div>
 
@@ -1859,7 +1899,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -1950,6 +1990,9 @@ function sendGoal() {
   if (isRunning) return;
 
   ta.value = '';
+  // Improvement 4: hide example chips once a goal is submitted
+  const examplesEl = document.getElementById('goal-examples');
+  if (examplesEl) examplesEl.style.display = 'none';
   isRunning = true;
   setRunning(true);
 
@@ -2331,6 +2374,28 @@ function showToast(message) {
 
 // ---- Init ----
 updateInboxBadge();
+
+// ---- Improvement 4: Example goal chips ----
+function useExampleGoal(chipEl) {
+  const ta = document.getElementById('goal-textarea');
+  ta.value = chipEl.textContent.trim();
+  ta.focus();
+  document.getElementById('goal-examples').style.display = 'none';
+}
+
+(function initGoalChips() {
+  const ta = document.getElementById('goal-textarea');
+  const examples = document.getElementById('goal-examples');
+  if (!ta || !examples) return;
+  ta.addEventListener('input', function() {
+    if (ta.value.trim().length > 0) {
+      examples.style.display = 'none';
+    } else {
+      examples.style.display = 'flex';
+    }
+  });
+})();
+
 </script>
 </body>
 </html>

@@ -896,7 +896,19 @@ html, body {
   padding: 4px 8px;
   font-family: inherit;
 }
-.fact-revert { font-size: 11px; color: var(--teal); cursor: pointer; text-decoration: underline; margin-top: 3px; display: inline-block; }
+.fact-edit-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+.fact-save-btn {
+  background: var(--teal); border: none; border-radius: 3px; color: #000;
+  font-size: 11px; font-weight: 600; padding: 3px 8px; cursor: pointer;
+  font-family: inherit; transition: opacity 0.15s;
+}
+.fact-save-btn:hover { opacity: 0.85; }
+.fact-cancel-btn {
+  background: none; border: 1px solid var(--surface-3); border-radius: 3px;
+  color: var(--text-2); font-size: 11px; padding: 3px 8px; cursor: pointer;
+  font-family: inherit; transition: background 0.15s;
+}
+.fact-cancel-btn:hover { background: var(--surface-2); }
 
 .btn-add-fact {
   background: transparent;
@@ -1917,7 +1929,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2299,49 +2311,72 @@ function editFact(editBtn) {
   const row = editBtn.closest('.memory-fact-row');
   const valCol = row.querySelector('.fact-val-col');
   const valEl = valCol.querySelector('.fact-value');
+  if (!valEl) return; // already in edit mode
   const originalVal = valEl.dataset.original;
-
-  if (valEl.dataset.editing === 'true') return;
-  valEl.dataset.editing = 'true';
-
   const currentVal = valEl.textContent;
+  const provEl = valCol.querySelector('.fact-provenance');
+
+  // Hide the displayed value and show an input
+  valEl.style.display = 'none';
+  editBtn.style.display = 'none';
+
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'fact-edit-input';
   input.value = currentVal;
-  valEl.replaceWith(input);
+
+  // Build Save + Cancel row
+  const actions = document.createElement('div');
+  actions.className = 'fact-edit-actions';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'fact-save-btn';
+  saveBtn.textContent = '✓ Save';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'fact-cancel-btn';
+  cancelBtn.textContent = '✕ Cancel';
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+
+  // Insert input + actions before the provenance line (or at end of valCol)
+  if (provEl) {
+    valCol.insertBefore(input, provEl);
+    valCol.insertBefore(actions, provEl);
+  } else {
+    valCol.appendChild(input);
+    valCol.appendChild(actions);
+  }
+
   input.focus();
   input.select();
 
-  const revert = document.createElement('span');
-  revert.className = 'fact-revert';
-  revert.textContent = 'Revert to original';
-  revert.style.display = currentVal === originalVal ? 'none' : 'inline-block';
-  valCol.appendChild(revert);
-
-  input.addEventListener('input', () => {
-    revert.style.display = input.value === originalVal ? 'none' : 'inline-block';
-  });
-
-  revert.addEventListener('click', () => {
-    input.value = originalVal;
-    revert.style.display = 'none';
-  });
-
-  function commitEdit() {
+  function saveEdit() {
     const newVal = input.value.trim() || originalVal;
-    const newValEl = document.createElement('div');
-    newValEl.className = 'fact-value';
-    newValEl.dataset.original = originalVal;
-    newValEl.textContent = newVal;
-    input.replaceWith(newValEl);
-    if (revert.parentNode) revert.remove();
+    valEl.textContent = newVal;
+    valEl.dataset.original = originalVal; // keep original for revert tracking
+    valEl.style.display = '';
+    editBtn.style.display = '';
+    input.remove();
+    actions.remove();
+    if (provEl) { provEl.textContent = 'Updated just now'; }
+    showToast('Memory updated ✓');
   }
 
-  input.addEventListener('blur', commitEdit);
+  function cancelEdit() {
+    valEl.style.display = '';
+    editBtn.style.display = '';
+    input.remove();
+    actions.remove();
+  }
+
+  saveBtn.addEventListener('click', saveEdit);
+  cancelBtn.addEventListener('click', cancelEdit);
+
   input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-    if (e.key === 'Escape') { input.value = originalVal; input.blur(); }
+    if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+    if (e.key === 'Escape') { cancelEdit(); }
   });
 }
 

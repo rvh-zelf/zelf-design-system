@@ -1230,6 +1230,27 @@ textarea:focus-visible,
   border-color: var(--teal);
 }
 
+/* ---- Improvement #8: Topbar view breadcrumb ---- */
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-3);
+  animation: breadcrumb-fadein 0.15s ease forwards;
+}
+@keyframes breadcrumb-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.topbar-breadcrumb .bc-sep {
+  color: var(--text-3);
+}
+.topbar-breadcrumb .bc-view {
+  color: var(--text-2);
+}
+
+
 </style>
 </head>
 <body>
@@ -1243,6 +1264,7 @@ textarea:focus-visible,
       <span class="star">✦</span>
       <span>Zelfi</span>
     </div>
+    <div id="topbar-breadcrumb" class="topbar-breadcrumb" aria-live="polite"></div>
     <div class="topbar-right">
       <div class="running-indicator hidden" id="running-indicator">
         <span class="running-dot"></span>
@@ -1929,7 +1951,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -1954,6 +1976,20 @@ function navigateTo(view) {
   // Activate nav button
   const navBtn = document.getElementById('nav-' + view);
   if (navBtn) navBtn.classList.add('active');
+  // Improvement #8: update topbar breadcrumb
+  const bc = document.getElementById('topbar-breadcrumb');
+  if (bc) {
+    const viewLabels = { inbox: 'Inbox', history: 'History', memory: 'Memory', settings: 'Settings' };
+    if (view === 'goals') {
+      bc.innerHTML = '';
+    } else {
+      const label = viewLabels[view] || (view.charAt(0).toUpperCase() + view.slice(1));
+      // Re-insert to retrigger animation
+      bc.innerHTML = '';
+      void bc.offsetWidth; // force reflow
+      bc.innerHTML = '<span class="bc-sep">›</span><span class="bc-view">' + label + '</span>';
+    }
+  }
 }
 
 // Sidebar nav buttons

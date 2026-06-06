@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zelfi</title>
+<style>
+/* ============================================================
+   ZELFI — Carbon for AI Design System v2
+   Self-contained — no external dependencies
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #161616;
+  --surface-1:    #262626;
+  --surface-2:    #393939;
+  --surface-3:    #525252;
+  --text-1:       #f4f4f4;
+  --text-2:       #c6c7c8;
+  --text-3:       #6f6f6f;
+  --text-inverse: #161616;
+  --teal:         #3ddbd9;
+  --teal-hover:   #009d9a;
+  --green:        #42be65;
+  --amber:        #f1c21b;
+  --red:          #fa4d56;
+  --blue:         #4589ff;
+  --purple:       #be95ff;
+  --ai-bg:        rgba(61,219,217,0.10);
+  --ai-border:    rgba(61,219,217,0.35);
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--surface-3);
+  padding: 0 16px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-1);
+}
+.topbar-brand .star { color: var(--teal); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.running-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.running-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: pulse-teal 1.2s ease-in-out infinite;
+}
+@keyframes pulse-teal {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.topbar-status:hover { background: var(--surface-2); }
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   BODY + SIDEBAR + CONTENT
+   ============================================================ */
+
+#body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#sidebar {
+  width: 48px;
+  background: var(--surface-1);
+  border-right: 1px solid var(--surface-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-2);
+  border-left: 3px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-btn:hover { background: var(--surface-2); }
+.nav-btn.active {
+  border-left-color: var(--teal);
+  color: var(--teal);
+}
+.nav-btn svg { width: 20px; height: 20px; }
+
+/* Inbox badge */
+.nav-btn .badge {
+  position: absolute;
+  top: 6px; right: 4px;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px; height: 16px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+}
+
+/* Settings pinned to bottom */
+.nav-spacer { flex: 1; }
+
+/* CSS tooltips */
+.nav-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%; transform: translateY(-50%);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--surface-3);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 200;
+}
+.nav-btn:hover::after { opacity: 1; }
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+#content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ============================================================
+   VIEW 1 — GOALS
+   ============================================================ */
+
+#agent-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Scrollbar */
+#agent-log::-webkit-scrollbar { width: 6px; }
+#agent-log::-webkit-scrollbar-track { background: var(--surface-1); }
+#agent-log::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+/* Goal header card */
+.goal-header-card {
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.goal-header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ai-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-border);
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ai-label:hover { background: rgba(61,219,217,0.18); }
+.ai-label .star { font-size: 12px; }
+.goal-label-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.goal-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.goal-header-meta {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Step cards */
+.step-card {
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.step-card[data-type="PLAN"]   { border-left: 3px solid var(--teal); }
+.step-card[data-type="TOOL"]   { border-left: 3px solid var(--amber); }
+.step-card[data-type="RESULT"] { border-left: 3px solid var(--green); }
+.step-card[data-type="EVAL"]   { border-left: 3px solid var(--purple); }
+.step-card[data-type="ERROR"]  { border-left: 3px solid var(--red); }
+
+.step-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.step-summary:hover { background: var(--surface-2); }
+
+.step-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.step-badge.plan   { background: rgba(61,219,217,0.15); color: var(--teal); }
+.step-badge.tool   { background: rgba(241,194,27,0.15); color: var(--amber); }
+.step-badge.result { background: rgba(66,190,101,0.15); color: var(--green); }
+.step-badge.eval   { background: rgba(190,149,255,0.15); color: var(--purple); }
+.step-badge.error  { background: rgba(250,77,86,0.15); color: var(--red); }
+
+.step-preview {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.step-time {
+  font-size: 11px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  font-family: 'SF Mono','Monaco','Menlo','Consolas', monospace;
+}
+.step-toggle {
+  font-size: 10px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.step-toggle.open { transform: rotate(90deg); }
+
+.step-body {
+  padding: 0 12px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.2s;
+}
+.step-body.expanded {
+  max-height: 600px;
+  padding: 10px 12px;
+}
+.step-body-inner {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  border-top: 1px solid var(--surface-3);
+  padding-top: 10px;
+}
+.step-mono {
+  font-family: 'SF Mono','Monaco','Menlo','Consolas', monospace;
+  font-size: 12px;
+  color: var(--amber);
+  background: rgba(241,194,27,0.06);
+  padding: 8px 10px;
+  border-radius: 3px;
+  margin: 6px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.step-source-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  padding: 1px 5px;
+  margin-top: 6px;
+  font-family: 'SF Mono','Monaco','Menlo','Consolas', monospace;
+}
+
+/* Active/streaming step */
+.step-card.streaming .step-summary { cursor: default; }
+.step-card.streaming .step-toggle { display: none; }
+
+.generating {
+  font-size: 12px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.dots { letter-spacing: 2px; animation: dot-pulse 1.2s infinite; }
+@keyframes dot-pulse {
+  0%   { opacity: 1; }
+  33%  { opacity: 0.3; }
+  66%  { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.cursor {
+  display: inline-block;
+  color: var(--teal);
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Controls row */
+#controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--surface-3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#controls-row.visible { opacity: 1; pointer-events: all; }
+
+.btn-ghost-amber {
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.btn-ghost-amber:hover { background: rgba(241,194,27,0.1); }
+
+.btn-ghost-red {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.btn-ghost-red:hover { background: rgba(250,77,86,0.1); }
+
+.step-counter { font-size: 13px; color: var(--text-2); margin-left: 8px; }
+
+/* Goal input */
+#goal-input-area {
+  padding: 16px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--surface-3);
+  flex-shrink: 0;
+}
+
+#goal-textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  padding: 10px 12px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+  min-height: 72px;
+}
+#goal-textarea::placeholder { color: var(--text-3); }
+#goal-textarea:focus { border-color: var(--teal); }
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-mic {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  cursor: not-allowed;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 16px;
+  opacity: 0.5;
+}
+
+.btn-send {
+  background: var(--teal);
+  color: var(--text-inverse);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+.btn-send:hover { background: var(--teal-hover); }
+
+.input-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+/* ============================================================
+   VIEW 2 — INBOX
+   ============================================================ */
+
+#view-inbox { overflow-y: auto; }
+#view-inbox::-webkit-scrollbar { width: 6px; }
+#view-inbox::-webkit-scrollbar-track { background: var(--surface-1); }
+#view-inbox::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--surface-3);
+  flex-shrink: 0;
+}
+.view-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+.unread-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.unread-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--surface-3);
+  color: var(--text-2);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--text-3); }
+
+.inbox-list {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inbox-item {
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  padding: 14px 16px;
+  overflow: hidden;
+  max-height: 400px;
+  transition: max-height 0.4s ease, opacity 0.3s, margin 0.3s;
+}
+.inbox-item.needs-input { border-left: 4px solid var(--red); }
+.inbox-item.review      { border-left: 4px solid var(--amber); }
+.inbox-item.fyi         { border-left: 4px solid var(--blue); }
+.inbox-item.dismissed   { max-height: 0; opacity: 0; margin: 0; padding: 0; pointer-events: none; }
+
+.inbox-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.inbox-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.inbox-type-badge.needs-input { color: var(--red); }
+.inbox-type-badge.review      { color: var(--amber); }
+.inbox-type-badge.fyi         { color: var(--blue); }
+.inbox-time { font-size: 11px; color: var(--text-3); }
+.inbox-title { font-size: 14px; font-weight: 600; color: var(--text-1); margin-bottom: 6px; }
+.inbox-body { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 10px; }
+.inbox-goal-link { font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
+.inbox-goal-link a {
+  color: var(--teal);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.inbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary-sm {
+  background: var(--teal);
+  color: var(--text-inverse);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-primary-sm:hover { background: var(--teal-hover); }
+
+.btn-ghost-sm {
+  background: transparent;
+  border: 1px solid var(--surface-3);
+  color: var(--text-2);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+.btn-ghost-sm:hover { background: var(--surface-2); }
+
+.acknowledged-section {
+  margin: 0 24px 16px;
+}
+.acknowledged-section summary {
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 8px 0;
+  user-select: none;
+}
+.acknowledged-section summary:hover { color: var(--text-2); }
+.acknowledged-items { padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.acknowledged-item {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 6px 10px;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   VIEW 3 — HISTORY
+   ============================================================ */
+
+#view-history { overflow-y: auto; }
+#view-history::-webkit-scrollbar { width: 6px; }
+#view-history::-webkit-scrollbar-track { background: var(--surface-1); }
+#view-history::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+.history-search-bar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--surface-3);
+  flex-shrink: 0;
+}
+.history-search-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.history-search-input::placeholder { color: var(--text-3); }
+.history-search-input:focus { border-color: var(--teal); }
+
+.history-list {
+  padding: 8px 24px;
+}
+
+.history-row {
+  border-bottom: 1px solid var(--surface-3);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.history-row:last-child { border-bottom: none; }
+.history-row:hover { background: var(--surface-2); }
+
+.history-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+}
+.history-row-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+}
+.history-icon { color: var(--teal); font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.history-title-col { display: flex; flex-direction: column; gap: 2px; }
+.history-title { font-size: 14px; font-weight: 600; color: var(--text-1); }
+.history-meta { font-size: 12px; color: var(--text-3); }
+.history-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.history-date { font-size: 12px; color: var(--text-3); }
+.history-check { color: var(--green); font-size: 14px; }
+
+.history-expand-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: var(--surface-1);
+}
+.history-expand-body.open { max-height: 300px; }
+.history-expand-inner {
+  padding: 12px 16px 16px 36px;
+  border-top: 1px solid var(--surface-3);
+}
+.history-step-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.step-badge-sm {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.step-badge-sm.plan   { background: rgba(61,219,217,0.15); color: var(--teal); }
+.step-badge-sm.tool   { background: rgba(241,194,27,0.15); color: var(--amber); }
+.step-badge-sm.result { background: rgba(66,190,101,0.15); color: var(--green); }
+.step-badge-sm.eval   { background: rgba(190,149,255,0.15); color: var(--purple); }
+
+.history-step-list { display: flex; flex-direction: column; gap: 4px; }
+.history-step-item { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.history-step-type { font-weight: 700; margin-right: 4px; }
+.history-step-type.plan { color: var(--teal); }
+.history-step-type.tool { color: var(--amber); }
+.history-step-type.result { color: var(--green); }
+
+.history-view-full {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--teal);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ============================================================
+   VIEW 4 — MEMORY
+   ============================================================ */
+
+#view-memory { overflow: hidden; display: flex; flex-direction: column; }
+
+.memory-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--surface-3);
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+.memory-tab {
+  padding: 12px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  transition: color 0.15s, border-color 0.15s;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+.memory-tab.active {
+  border-bottom-color: var(--teal);
+  color: var(--text-1);
+}
+.memory-tab:hover:not(.active) { color: var(--text-1); }
+
+.memory-tab-content { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.memory-tab-content::-webkit-scrollbar { width: 6px; }
+.memory-tab-content::-webkit-scrollbar-track { background: var(--surface-1); }
+.memory-tab-content::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+/* Semantic memory */
+.memory-group { margin-bottom: 24px; }
+.memory-group-heading {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--surface-3);
+}
+
+.memory-fact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  position: relative;
+}
+.memory-fact-row:hover .edit-btn { opacity: 1; }
+.fact-key {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+.fact-val-col { flex: 1; }
+.fact-value { font-size: 13px; color: var(--text-1); }
+.fact-provenance { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.edit-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-2); font-size: 14px; opacity: 0;
+  transition: opacity 0.15s; padding: 2px 4px; border-radius: 2px;
+  flex-shrink: 0; align-self: flex-start;
+}
+.edit-btn:hover { background: var(--surface-2); }
+.fact-edit-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--teal);
+  border-radius: 3px;
+  color: var(--text-1);
+  font-size: 13px;
+  padding: 4px 8px;
+  outline: none;
+  font-family: inherit;
+}
+.fact-revert { font-size: 11px; color: var(--teal); cursor: pointer; text-decoration: underline; margin-top: 3px; display: inline-block; }
+
+.btn-add-fact {
+  background: transparent;
+  border: 1px dashed var(--surface-3);
+  color: var(--text-3);
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+  margin-top: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-add-fact:hover { background: var(--surface-2); color: var(--text-2); }
+
+/* Episodic memory */
+.episodic-group { margin-bottom: 20px; }
+.episodic-day-header {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-2);
+  padding: 0 0 8px 0;
+  margin-bottom: 4px;
+}
+.episodic-timeline {
+  border-left: 2px solid var(--surface-3);
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.episodic-entry { display: flex; gap: 10px; }
+.episodic-time { font-size: 12px; color: var(--text-1); font-family: 'SF Mono','Monaco','Menlo','Consolas',monospace; flex-shrink: 0; min-width: 40px; }
+.episodic-text { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+/* ============================================================
+   VIEW 5 — SETTINGS
+   ============================================================ */
+
+#view-settings { overflow-y: auto; }
+#view-settings::-webkit-scrollbar { width: 6px; }
+#view-settings::-webkit-scrollbar-track { background: var(--surface-1); }
+#view-settings::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+.settings-inner { max-width: 600px; padding: 24px; }
+
+.settings-section { margin-bottom: 32px; }
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-3);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--surface-3);
+  margin-bottom: 16px;
+}
+
+.settings-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+.settings-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.settings-url-input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: 4px;
+  color: var(--text-1);
+  font-family: 'SF Mono','Monaco','Menlo','Consolas',monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.settings-url-input:focus { border-color: var(--teal); }
+.btn-test {
+  background: transparent;
+  border: 1px solid var(--surface-3);
+  color: var(--text-2);
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btn-test:hover { background: var(--surface-2); border-color: var(--text-3); }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--green);
+}
+.connection-status .status-dot { background: var(--green); }
+.connection-status.checking { color: var(--amber); }
+.connection-status.checking .status-dot { background: var(--amber); }
+
+.settings-about {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.8;
+}
+.settings-about .version { font-family: 'SF Mono','Monaco','Menlo','Consolas',monospace; }
+
+.settings-data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--surface-3);
+  font-size: 13px;
+}
+.settings-data-row:last-child { border-bottom: none; }
+.settings-data-key { color: var(--text-2); }
+.settings-data-val { color: var(--text-1); font-weight: 600; }
+.settings-data-path {
+  font-family: 'SF Mono','Monaco','Menlo','Consolas',monospace;
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 8px;
+}
+
+.danger-zone-buttons { display: flex; gap: 8px; }
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-danger:hover { background: rgba(250,77,86,0.1); }
+
+.danger-confirm {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(250,77,86,0.08);
+  border: 1px solid rgba(250,77,86,0.3);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.danger-confirm-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+/* ============================================================
+   AI EXPLAINABILITY POPOVER
+   ============================================================ */
+
+#ai-popover {
+  position: fixed;
+  z-index: 1000;
+  background: var(--surface-2);
+  border: 1px solid var(--ai-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  max-width: 320px;
+  width: 320px;
+  overflow: hidden;
+}
+
+.popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--surface-3);
+  background: var(--ai-bg);
+}
+.popover-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.popover-close {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 2px;
+  border-radius: 2px;
+  transition: color 0.15s;
+}
+.popover-close:hover { color: var(--text-1); }
+
+.popover-rows { padding: 10px 14px; border-bottom: 1px solid var(--surface-3); }
+.popover-row {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 12px;
+}
+.popover-row-key { color: var(--text-3); min-width: 70px; flex-shrink: 0; }
+.popover-row-val { color: var(--text-1); }
+
+.popover-disclaimer {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+#toast-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--surface-2);
+  border: 1px solid var(--teal);
+  color: var(--text-1);
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  animation: slide-in-right 0.25s ease;
+  transition: opacity 0.3s;
+}
+.toast.hiding { opacity: 0; }
+.toast-check { color: var(--green); font-weight: 700; }
+
+@keyframes slide-in-right {
+  from { transform: translateX(100px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ============================================================
+   EMPTY STATE (agent log when no goals yet)
+   ============================================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-3);
+  gap: 8px;
+  padding: 40px;
+  text-align: center;
+}
+.empty-state-star { font-size: 32px; color: var(--teal); opacity: 0.4; }
+.empty-state-text { font-size: 14px; }
+.empty-state-hint { font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================================================
+       TOPBAR
+       ============================================================ -->
+  <header id="topbar">
+    <div class="topbar-brand">
+      <span class="star">✦</span>
+      <span>Zelfi</span>
+    </div>
+    <div class="topbar-right">
+      <div class="running-indicator hidden" id="running-indicator">
+        <span class="running-dot"></span>
+        <span>Working&hellip;</span>
+      </div>
+      <div class="topbar-status" id="topbar-status" title="Click to open Settings">
+        <span class="status-dot"></span>
+        <span>Gemma 4 E4B-it</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       BODY
+       ============================================================ -->
+  <div id="body">
+
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+      <button class="nav-btn active" data-view="goals" data-tip="Goals ⌘1" id="nav-goals">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </button>
+      <button class="nav-btn" data-view="inbox" data-tip="Inbox ⌘2" id="nav-inbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <span class="badge" id="inbox-badge">2</span>
+      </button>
+      <button class="nav-btn" data-view="history" data-tip="History ⌘3" id="nav-history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </button>
+      <button class="nav-btn" data-view="memory" data-tip="Memory ⌘4" id="nav-memory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+      </button>
+      <div class="nav-spacer"></div>
+      <button class="nav-btn" data-view="settings" data-tip="Settings ⌘5" id="nav-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main id="content">
+
+      <!-- ============================================================
+           VIEW 1 — GOALS
+           ============================================================ -->
+      <div class="view" id="view-goals">
+        <div id="agent-log">
+          <!-- Pre-loaded demo goal -->
+          <div class="goal-header-card" id="demo-goal-card">
+            <div class="goal-header-top">
+              <span class="ai-label" data-ai-source="Goal" onclick="openPopover(this)"><span class="star">✦</span> AI</span>
+              <span class="goal-label-tag">Goal</span>
+            </div>
+            <div class="goal-header-title">Research current Xneelo managed WordPress hosting pricing and compare with their VPS options</div>
+            <div class="goal-header-meta">Started 14:23 &middot; Completed 14:25 &middot; 8 steps</div>
+          </div>
+
+          <!-- Step 1 — PLAN -->
+          <div class="step-card collapsed" data-type="PLAN" id="step-1">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge plan">PLAN</span>
+              <span class="step-preview">Break research into steps: search for official Xneelo pricing&hellip;</span>
+              <span class="step-time">14:23:01</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">Break research into steps: search for official Xneelo pricing, navigate to pricing page, extract plan details, then compare with VPS options.</div>
+            </div>
+          </div>
+
+          <!-- Step 2 — TOOL -->
+          <div class="step-card collapsed" data-type="TOOL" id="step-2">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge tool">TOOL</span>
+              <span class="step-preview">browser.search("Xneelo managed WordPress hosting pricing 2026")</span>
+              <span class="step-time">14:23:04</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">
+                <div class="step-mono">browser.search("Xneelo managed WordPress hosting pricing 2026")</div>
+                <span class="step-source-tag">[SOURCE: browser.search | 5 results]</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 — RESULT -->
+          <div class="step-card collapsed" data-type="RESULT" id="step-3">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge result">RESULT</span>
+              <span class="step-preview">1. xneelo.co.za | &ldquo;Managed WordPress from R49/mo&hellip;&rdquo;</span>
+              <span class="step-time">14:23:05</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">
+                <div style="margin-bottom:8px"><span class="ai-label" data-ai-source="browser.search (5 results)" onclick="openPopover(this)"><span class="star">✦</span> AI</span></div>
+                <div>1. xneelo.co.za | &ldquo;Managed WordPress from R49/mo&hellip;&rdquo;<br>2. mybroadband.co.za | &ldquo;Xneelo pricing update 2026&rdquo;<br>3. web.co.za | Xneelo reseller comparison</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 — TOOL -->
+          <div class="step-card collapsed" data-type="TOOL" id="step-4">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge tool">TOOL</span>
+              <span class="step-preview">browser.navigate("https://xneelo.co.za/web-hosting/wordpress-hosting/")</span>
+              <span class="step-time">14:23:08</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">
+                <div class="step-mono">browser.navigate("https://xneelo.co.za/web-hosting/wordpress-hosting/")</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 — RESULT -->
+          <div class="step-card collapsed" data-type="RESULT" id="step-5">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge result">RESULT</span>
+              <span class="step-preview">Xneelo WordPress Plans: Starter R49/mo &middot; Business R99/mo &middot; Pro R199/mo</span>
+              <span class="step-time">14:23:12</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">
+                <div style="margin-bottom:8px"><span class="ai-label" data-ai-source="browser.read (84KB → 1.2KB)" onclick="openPopover(this)"><span class="star">✦</span> AI</span></div>
+                <span class="step-source-tag">[SOURCE: browser.read | 84KB &rarr; 1.2KB]</span>
+                <div style="margin-top:8px">Xneelo WordPress Plans: Starter R49/mo &middot; Business R99/mo &middot; Pro R199/mo</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6 — EVAL -->
+          <div class="step-card collapsed" data-type="EVAL" id="step-6">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge eval">EVAL</span>
+              <span class="step-preview">WordPress pricing captured. Retrieving VPS options for comparison.</span>
+              <span class="step-time">14:23:14</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">WordPress pricing captured. Retrieving VPS options for comparison.</div>
+            </div>
+          </div>
+
+          <!-- Step 7 — TOOL -->
+          <div class="step-card collapsed" data-type="TOOL" id="step-7">
+            <div class="step-summary" onclick="toggleStep(this)">
+              <span class="step-badge tool">TOOL</span>
+              <span class="step-preview">browser.search("Xneelo VPS hosting pricing 2026")</span>
+              <span class="step-time">14:23:16</span>
+              <span class="step-toggle">&#9658;</span>
+            </div>
+            <div class="step-body">
+              <div class="step-body-inner">
+                <div class="step-mono">browser.search("Xneelo VPS hosting pricing 2026")</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 8 — RESULT (streaming) -->
+          <div class="step-card streaming" data-type="RESULT" id="step-8">
+            <div class="step-summary">
+              <span class="step-badge result">RESULT</span>
+              <span class="step-preview">Xneelo VPS Plans: VPS 1: R299/mo &mdash; 1 vCPU&hellip;</span>
+              <span class="step-time">14:23:19</span>
+            </div>
+            <div class="step-body expanded">
+              <div class="step-body-inner">
+                <div style="margin-bottom:8px"><span class="ai-label" data-ai-source="browser.search (VPS results)" onclick="openPopover(this)"><span class="star">✦</span> AI</span></div>
+                <div class="generating"><span>generating</span><span class="dots">&middot;&middot;&middot;</span></div>
+                <div id="step-8-text">Xneelo VPS Plans:<br>&bull; VPS 1: R299/mo &mdash; 1 vCPU, 1GB RAM, 25GB SSD<br>&bull; VPS 2: R499/mo &mdash; 2 vCPU<span class="cursor">&#9608;</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls row -->
+        <div id="controls-row">
+          <button class="btn-ghost-amber" onclick="pauseAgent()">&#9646;&#9646; Pause</button>
+          <button class="btn-ghost-red" onclick="stopAgent()">&#9646; Stop</button>
+          <span class="step-counter" id="step-counter">Step 8 of ~8</span>
+        </div>
+
+        <!-- Goal input -->
+        <div id="goal-input-area">
+          <textarea id="goal-textarea" rows="3" placeholder="Give Zelfi a goal&hellip;"></textarea>
+          <div class="input-actions">
+            <button class="btn-mic" title="Voice input &mdash; coming soon">&#127908;</button>
+            <button class="btn-send" id="send-btn" onclick="sendGoal()"><span>&#9889;</span> Send</button>
+          </div>
+          <div class="input-hint">&#8984;+Enter to send &middot; 100% local</div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           VIEW 2 — INBOX
+           ============================================================ -->
+      <div class="view hidden" id="view-inbox">
+        <div class="view-header">
+          <div class="view-title">
+            Inbox
+            <span class="unread-badge" id="inbox-unread-badge"><span class="unread-dot"></span><span id="inbox-count-label">2 unread</span></span>
+          </div>
+          <button class="btn-ghost" onclick="markAllReviewed()">Mark all as reviewed</button>
+        </div>
+        <div class="inbox-list">
+
+          <!-- Item 1: NEEDS_INPUT -->
+          <div class="inbox-item needs-input" id="inbox-item-1">
+            <div class="inbox-item-header">
+              <span class="inbox-type-badge needs-input">&#128308; Needs Input</span>
+              <span class="inbox-time">2 minutes ago</span>
+            </div>
+            <div class="inbox-title">Research task hit authentication wall</div>
+            <div class="inbox-body">Xneelo&rsquo;s detailed pricing page requires login to view full plan details. Continue with publicly available data, or provide credentials to proceed?</div>
+            <div class="inbox-goal-link">Goal: &ldquo;Research Xneelo hosting pricing&rdquo; &nbsp;<a onclick="navigateTo('history')">View goal &rarr;</a></div>
+            <div class="inbox-actions">
+              <button class="btn-primary-sm" onclick="resumeTask(1)">Resume task</button>
+              <button class="btn-ghost-sm" onclick="dismissInboxItem(1)">Dismiss</button>
+            </div>
+          </div>
+
+          <!-- Item 2: REVIEW -->
+          <div class="inbox-item review" id="inbox-item-2">
+            <div class="inbox-item-header">
+              <span class="inbox-type-badge review">&#128993; Review</span>
+              <span class="inbox-time">8 minutes ago</span>
+            </div>
+            <div class="inbox-title">Hosting comparison research complete</div>
+            <div class="inbox-body">Found WordPress plans (R49&ndash;R199/mo) and VPS tiers (R299&ndash;R999/mo). Summary saved. Ready for your review.</div>
+            <div class="inbox-goal-link">Goal: &ldquo;Research Xneelo hosting pricing&rdquo; &nbsp;<a onclick="navigateTo('history')">View goal &rarr;</a></div>
+            <div class="inbox-actions">
+              <button class="btn-ghost-sm" onclick="navigateTo('history')">View full log</button>
+              <button class="btn-ghost-sm" onclick="dismissInboxItem(2)">Dismiss</button>
+            </div>
+          </div>
+
+          <!-- Item 3: FYI -->
+          <div class="inbox-item fyi" id="inbox-item-3">
+            <div class="inbox-item-header">
+              <span class="inbox-type-badge fyi">&#128309; FYI</span>
+              <span class="inbox-time">1 hour ago</span>
+            </div>
+            <div class="inbox-title">Recurring topic detected</div>
+            <div class="inbox-body">&ldquo;Xneelo&rdquo; has appeared in 4 recent goals. Add it as a tracked project in your memory?</div>
+            <div class="inbox-actions">
+              <button class="btn-primary-sm" onclick="rememberIt(3)">Remember it</button>
+              <button class="btn-ghost-sm" onclick="dismissInboxItem(3)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <details class="acknowledged-section" id="acknowledged-section">
+          <summary>Acknowledged (<span id="acknowledged-count">0</span>)</summary>
+          <div class="acknowledged-items" id="acknowledged-list"></div>
+        </details>
+      </div>
+
+      <!-- ============================================================
+           VIEW 3 — HISTORY
+           ============================================================ -->
+      <div class="view hidden" id="view-history">
+        <div class="view-header" style="flex-shrink:0">
+          <div class="view-title">Goal History</div>
+        </div>
+        <div class="history-search-bar">
+          <input type="text" class="history-search-input" placeholder="Search history&hellip;">
+        </div>
+        <div class="history-list">
+
+          <div class="history-row" onclick="toggleHistory(this)">
+            <div class="history-row-header">
+              <div class="history-row-left">
+                <span class="history-icon">&#9889;</span>
+                <div class="history-title-col">
+                  <span class="history-title">Research Xneelo hosting pricing</span>
+                  <span class="history-meta">8 steps &middot; Completed</span>
+                </div>
+              </div>
+              <div class="history-row-right">
+                <span class="history-date">Today 14:23</span>
+                <span class="history-check">&#10003;</span>
+              </div>
+            </div>
+            <div class="history-expand-body">
+              <div class="history-expand-inner">
+                <div class="history-step-badges">
+                  <span class="step-badge-sm plan">PLAN</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm eval">EVAL</span>
+                </div>
+                <div class="history-step-list">
+                  <div class="history-step-item"><span class="history-step-type plan">PLAN:</span> Broke task into research steps</div>
+                  <div class="history-step-item"><span class="history-step-type tool">TOOL:</span> browser.search("Xneelo managed WordPress hosting pricing 2026")</div>
+                  <div class="history-step-item"><span class="history-step-type result">RESULT:</span> &#10022; AI Found 3 relevant sources including official pricing page</div>
+                </div>
+                <span class="history-view-full" onclick="event.stopPropagation()">View full &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-row" onclick="toggleHistory(this)">
+            <div class="history-row-header">
+              <div class="history-row-left">
+                <span class="history-icon">&#9889;</span>
+                <div class="history-title-col">
+                  <span class="history-title">Draft update email for Leoni</span>
+                  <span class="history-meta">6 steps &middot; Completed</span>
+                </div>
+              </div>
+              <div class="history-row-right">
+                <span class="history-date">Today 11:05</span>
+                <span class="history-check">&#10003;</span>
+              </div>
+            </div>
+            <div class="history-expand-body">
+              <div class="history-expand-inner">
+                <div class="history-step-badges">
+                  <span class="step-badge-sm plan">PLAN</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm eval">EVAL</span>
+                </div>
+                <div class="history-step-list">
+                  <div class="history-step-item"><span class="history-step-type plan">PLAN:</span> Identify email context, draft content, save to Desktop</div>
+                  <div class="history-step-item"><span class="history-step-type tool">TOOL:</span> email.draft(to="leoni@media24.com", subject="Medical Academic update")</div>
+                  <div class="history-step-item"><span class="history-step-type result">RESULT:</span> &#10022; AI Draft saved to ~/Desktop/leoni-update.eml</div>
+                </div>
+                <span class="history-view-full" onclick="event.stopPropagation()">View full &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-row" onclick="toggleHistory(this)">
+            <div class="history-row-header">
+              <div class="history-row-left">
+                <span class="history-icon">&#9889;</span>
+                <div class="history-title-col">
+                  <span class="history-title">Summarise AI regulations in SA</span>
+                  <span class="history-meta">9 steps &middot; Completed</span>
+                </div>
+              </div>
+              <div class="history-row-right">
+                <span class="history-date">Yesterday</span>
+                <span class="history-check">&#10003;</span>
+              </div>
+            </div>
+            <div class="history-expand-body">
+              <div class="history-expand-inner">
+                <div class="history-step-badges">
+                  <span class="step-badge-sm plan">PLAN</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm eval">EVAL</span>
+                </div>
+                <div class="history-step-list">
+                  <div class="history-step-item"><span class="history-step-type plan">PLAN:</span> Search for 2026 SA AI regulation amendments</div>
+                  <div class="history-step-item"><span class="history-step-type tool">TOOL:</span> browser.search("South Africa AI regulations 2026 amendments")</div>
+                  <div class="history-step-item"><span class="history-step-type result">RESULT:</span> &#10022; AI 3 key regulatory changes identified and summarised</div>
+                </div>
+                <span class="history-view-full" onclick="event.stopPropagation()">View full &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-row" onclick="toggleHistory(this)">
+            <div class="history-row-header">
+              <div class="history-row-left">
+                <span class="history-icon">&#9889;</span>
+                <div class="history-title-col">
+                  <span class="history-title">Compare CPD platforms for B2B</span>
+                  <span class="history-meta">7 steps &middot; Completed</span>
+                </div>
+              </div>
+              <div class="history-row-right">
+                <span class="history-date">3 days ago</span>
+                <span class="history-check">&#10003;</span>
+              </div>
+            </div>
+            <div class="history-expand-body">
+              <div class="history-expand-inner">
+                <div class="history-step-badges">
+                  <span class="step-badge-sm plan">PLAN</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm eval">EVAL</span>
+                </div>
+                <div class="history-step-list">
+                  <div class="history-step-item"><span class="history-step-type plan">PLAN:</span> Research CPD platform options suitable for Medical Academic</div>
+                  <div class="history-step-item"><span class="history-step-type tool">TOOL:</span> browser.search("CPD platform comparison South Africa medical 2026")</div>
+                  <div class="history-step-item"><span class="history-step-type result">RESULT:</span> &#10022; AI Comparison table of 4 platforms saved to Desktop</div>
+                </div>
+                <span class="history-view-full" onclick="event.stopPropagation()">View full &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-row" onclick="toggleHistory(this)">
+            <div class="history-row-header">
+              <div class="history-row-left">
+                <span class="history-icon">&#9889;</span>
+                <div class="history-title-col">
+                  <span class="history-title">Find Tauri UI component libraries</span>
+                  <span class="history-meta">5 steps &middot; Completed</span>
+                </div>
+              </div>
+              <div class="history-row-right">
+                <span class="history-date">1 week ago</span>
+                <span class="history-check">&#10003;</span>
+              </div>
+            </div>
+            <div class="history-expand-body">
+              <div class="history-expand-inner">
+                <div class="history-step-badges">
+                  <span class="step-badge-sm plan">PLAN</span>
+                  <span class="step-badge-sm tool">TOOL</span>
+                  <span class="step-badge-sm result">RESULT</span>
+                  <span class="step-badge-sm eval">EVAL</span>
+                </div>
+                <div class="history-step-list">
+                  <div class="history-step-item"><span class="history-step-type plan">PLAN:</span> Search GitHub and npm for Tauri-compatible UI libraries</div>
+                  <div class="history-step-item"><span class="history-step-type tool">TOOL:</span> browser.search("Tauri 2.0 UI component library SvelteKit 2026")</div>
+                  <div class="history-step-item"><span class="history-step-type result">RESULT:</span> &#10022; AI 5 libraries evaluated; DaisyUI + custom CSS recommended</div>
+                </div>
+                <span class="history-view-full" onclick="event.stopPropagation()">View full &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           VIEW 4 — MEMORY
+           ============================================================ -->
+      <div class="view hidden" id="view-memory">
+        <div class="memory-tabs">
+          <button class="memory-tab active" onclick="switchMemoryTab('semantic', this)">Semantic</button>
+          <button class="memory-tab" onclick="switchMemoryTab('episodic', this)">Episodic</button>
+        </div>
+
+        <!-- Semantic tab -->
+        <div class="memory-tab-content" id="memory-semantic">
+          <!-- About you -->
+          <div class="memory-group">
+            <div class="memory-group-heading">About you</div>
+            <div class="memory-fact-row">
+              <span class="fact-key">Name</span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Ruan van Heerden">Ruan van Heerden</div>
+                <div class="fact-provenance">Learned: 3 days ago &middot; from onboarding</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <div class="memory-fact-row">
+              <span class="fact-key">Role</span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Digital Solutions Manager, Media24 B2B">Digital Solutions Manager, Media24 B2B</div>
+                <div class="fact-provenance">Learned: 3 days ago &middot; from onboarding</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <div class="memory-fact-row">
+              <span class="fact-key">Location</span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="South Africa (remote)">South Africa (remote)</div>
+                <div class="fact-provenance">Learned: 3 days ago &middot; from onboarding</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <button class="btn-add-fact">+ Add fact</button>
+          </div>
+
+          <!-- Current projects -->
+          <div class="memory-group">
+            <div class="memory-group-heading">Current projects</div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Medical Academic website (with Leoni)">Medical Academic website (with Leoni)</div>
+                <div class="fact-provenance">Learned: 2 days ago</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="The Buyer's Guide">The Buyer&rsquo;s Guide</div>
+                <div class="fact-provenance">Learned: 2 days ago</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Analytics Reporter">Analytics Reporter</div>
+                <div class="fact-provenance">Learned: 2 days ago</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <button class="btn-add-fact">+ Add fact</button>
+          </div>
+
+          <!-- Contacts -->
+          <div class="memory-group">
+            <div class="memory-group-heading">Contacts</div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Leoni — colleague, Medical Academic project">Leoni &mdash; colleague, Medical Academic project</div>
+                <div class="fact-provenance">Learned: yesterday</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <button class="btn-add-fact">+ Add fact</button>
+          </div>
+
+          <!-- Preferences -->
+          <div class="memory-group">
+            <div class="memory-group-heading">Preferences</div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Responses: concise, South African English">Responses: concise, South African English</div>
+                <div class="fact-provenance">Learned: 3 days ago</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <div class="memory-fact-row">
+              <span class="fact-key"></span>
+              <div class="fact-val-col">
+                <div class="fact-value" data-original="Dark mode: preferred">Dark mode: preferred</div>
+                <div class="fact-provenance">Learned: 3 days ago</div>
+              </div>
+              <button class="edit-btn" onclick="editFact(this)" title="Edit">&#9998;</button>
+            </div>
+            <button class="btn-add-fact">+ Add fact</button>
+          </div>
+        </div>
+
+        <!-- Episodic tab -->
+        <div class="memory-tab-content hidden" id="memory-episodic">
+          <div class="episodic-group">
+            <div class="episodic-day-header">Today</div>
+            <div class="episodic-timeline">
+              <div class="episodic-entry">
+                <span class="episodic-time">14:23</span>
+                <span class="episodic-text">Researched Xneelo hosting pricing. Found WordPress (R49&ndash;R199) and VPS (R299&ndash;R999) options. Comparison saved to Desktop.</span>
+              </div>
+              <div class="episodic-entry">
+                <span class="episodic-time">11:05</span>
+                <span class="episodic-text">Drafted progress email to Leoni re: Medical Academic homepage layout. Saved draft to Desktop.</span>
+              </div>
+            </div>
+          </div>
+          <div class="episodic-group" style="margin-top:20px">
+            <div class="episodic-day-header">Yesterday</div>
+            <div class="episodic-timeline">
+              <div class="episodic-entry">
+                <span class="episodic-time">16:30</span>
+                <span class="episodic-text">Summarised new AI regulations in South Africa (2026 amendments). 3 key points noted.</span>
+              </div>
+              <div class="episodic-entry">
+                <span class="episodic-time">09:15</span>
+                <span class="episodic-text">Compared CPD platforms for Medical Academic brand.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           VIEW 5 — SETTINGS
+           ============================================================ -->
+      <div class="view hidden" id="view-settings">
+        <div class="settings-inner">
+
+          <div class="settings-section">
+            <div class="settings-section-title">LM Studio connection</div>
+            <div class="settings-field-label">Server URL</div>
+            <div class="settings-url-row">
+              <input type="text" class="settings-url-input" id="lm-url-input" value="http://127.0.0.1:2323">
+              <button class="btn-test" onclick="testConnection()">Test</button>
+            </div>
+            <div class="connection-status" id="connection-status">
+              <span class="status-dot"></span>
+              <span>Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">About</div>
+            <div class="settings-about">
+              Zelfi &middot; <span class="version">2026.06.06.15</span> &middot; Local-first autonomous AI agent<br>
+              100% private &middot; No cloud &middot; No telemetry
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Your data</div>
+            <div class="settings-data-row">
+              <span class="settings-data-key">Memory facts</span>
+              <span class="settings-data-val">12 entries</span>
+            </div>
+            <div class="settings-data-row">
+              <span class="settings-data-key">Episodic memory</span>
+              <span class="settings-data-val">4 sessions</span>
+            </div>
+            <div class="settings-data-row">
+              <span class="settings-data-key">Goal history</span>
+              <span class="settings-data-val">5 goals</span>
+            </div>
+            <div class="settings-data-path">All data stored locally in ~/.zelfi/</div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Danger zone</div>
+            <div class="danger-zone-buttons">
+              <button class="btn-danger" onclick="showDangerConfirm('memory')">Clear all memory</button>
+              <button class="btn-danger" onclick="showDangerConfirm('reset')">Reset Zelfi</button>
+            </div>
+            <div class="danger-confirm hidden" id="danger-confirm">
+              <span id="danger-message">Are you sure? This cannot be undone.</span>
+              <div class="danger-confirm-actions">
+                <button class="btn-danger" onclick="confirmDanger()">Yes, proceed</button>
+                <button class="btn-ghost-sm" onclick="cancelDanger()">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- AI Explainability Popover -->
+<div id="ai-popover" class="hidden">
+  <div class="popover-header">
+    <div class="popover-header-title"><span>&#10022;</span> AI-generated content</div>
+    <button class="popover-close" onclick="closePopover()">&#215;</button>
+  </div>
+  <div class="popover-rows">
+    <div class="popover-row">
+      <span class="popover-row-key">Model</span>
+      <span class="popover-row-val">Gemma 4 E4B-it MLX 4-bit</span>
+    </div>
+    <div class="popover-row">
+      <span class="popover-row-key">Running</span>
+      <span class="popover-row-val">Locally on this machine</span>
+    </div>
+    <div class="popover-row">
+      <span class="popover-row-key">Privacy</span>
+      <span class="popover-row-val">No data sent to external servers</span>
+    </div>
+    <div class="popover-row" id="popover-source-row">
+      <span class="popover-row-key">Source</span>
+      <span class="popover-row-val" id="popover-source-val">browser.search (5 results)</span>
+    </div>
+  </div>
+  <div class="popover-disclaimer">
+    This content was generated by your local AI. It may contain errors &mdash; always verify important information.
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+/* ============================================================
+   ZELFI — Application JavaScript
+   ============================================================ */
+
+// ---- State ----
+let isRunning = false;
+let inboxCount = 2; // NEEDS_INPUT + REVIEW only
+let acknowledgedCount = 0;
+let acknowledgedItems = [];
+let dangerAction = null;
+let streamTimer = null;
+
+// ---- Navigation ----
+function navigateTo(view) {
+  // Deactivate all nav buttons
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  // Hide all views
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  // Show target view
+  const viewEl = document.getElementById('view-' + view);
+  if (viewEl) viewEl.classList.remove('hidden');
+  // Activate nav button
+  const navBtn = document.getElementById('nav-' + view);
+  if (navBtn) navBtn.classList.add('active');
+}
+
+// Sidebar nav buttons
+document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+});
+
+// Topbar status → Settings
+document.getElementById('topbar-status').addEventListener('click', () => navigateTo('settings'));
+
+// ---- Keyboard shortcuts ----
+document.addEventListener('keydown', e => {
+  const meta = e.metaKey || e.ctrlKey;
+  if (meta && e.key === '1') { e.preventDefault(); navigateTo('goals'); }
+  if (meta && e.key === '2') { e.preventDefault(); navigateTo('inbox'); }
+  if (meta && e.key === '3') { e.preventDefault(); navigateTo('history'); }
+  if (meta && e.key === '4') { e.preventDefault(); navigateTo('memory'); }
+  if (meta && e.key === '5') { e.preventDefault(); navigateTo('settings'); }
+  if (meta && e.key === 'Enter') {
+    const ta = document.getElementById('goal-textarea');
+    if (document.activeElement === ta || document.getElementById('view-goals').style.display !== 'none') {
+      sendGoal();
+    }
+  }
+  if (e.key === 'Escape') {
+    closePopover();
+  }
+});
+
+document.getElementById('goal-textarea').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    sendGoal();
+  }
+});
+
+// ---- Step collapse/expand ----
+function toggleStep(summaryEl) {
+  const card = summaryEl.closest('.step-card');
+  if (card.classList.contains('streaming')) return;
+  const body = card.querySelector('.step-body');
+  const toggle = summaryEl.querySelector('.step-toggle');
+  const isExpanded = body.classList.contains('expanded');
+  if (isExpanded) {
+    body.classList.remove('expanded');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('expanded');
+    toggle.classList.add('open');
+  }
+}
+
+// ---- History expand ----
+function toggleHistory(rowEl) {
+  const body = rowEl.querySelector('.history-expand-body');
+  body.classList.toggle('open');
+}
+
+// ---- Goal send / demo animation ----
+function sendGoal() {
+  const ta = document.getElementById('goal-textarea');
+  const goalText = ta.value.trim();
+  if (!goalText) { ta.focus(); return; }
+  if (isRunning) return;
+
+  ta.value = '';
+  isRunning = true;
+  setRunning(true);
+
+  const log = document.getElementById('agent-log');
+
+  // Goal header card
+  const goalCard = document.createElement('div');
+  goalCard.className = 'goal-header-card';
+  goalCard.innerHTML = `
+    <div class="goal-header-top">
+      <span class="ai-label" data-ai-source="Goal" onclick="openPopover(this)"><span class="star">&#10022;</span> AI</span>
+      <span class="goal-label-tag">Goal</span>
+    </div>
+    <div class="goal-header-title">${escapeHtml(goalText)}</div>
+    <div class="goal-header-meta">Started ${currentTime()} &middot; In progress&hellip;</div>
+  `;
+  log.appendChild(goalCard);
+  log.scrollTop = log.scrollHeight;
+
+  // Show controls
+  const controls = document.getElementById('controls-row');
+  controls.classList.add('visible');
+  document.getElementById('step-counter').textContent = 'Step 1 of ~3';
+
+  // t+800ms: PLAN step
+  setTimeout(() => {
+    const planCard = createStepCard('PLAN', 'plan', 'Working on your goal&hellip;', currentTime(),
+      `I&rsquo;m working on this goal now. Breaking it into steps.`);
+    log.appendChild(planCard);
+    expandStepBody(planCard);
+    log.scrollTop = log.scrollHeight;
+    document.getElementById('step-counter').textContent = 'Step 1 of ~3';
+  }, 800);
+
+  // t+1600ms: TOOL step
+  setTimeout(() => {
+    const toolCard = createStepCard('TOOL', 'tool', `browser.search("${escapeHtml(goalText)}")`, currentTime(),
+      `<div class="step-mono">browser.search("${escapeHtml(goalText)}")</div>`);
+    log.appendChild(toolCard);
+    expandStepBody(toolCard);
+    log.scrollTop = log.scrollHeight;
+    document.getElementById('step-counter').textContent = 'Step 2 of ~3';
+  }, 1600);
+
+  // t+2400ms: RESULT step (streaming)
+  setTimeout(() => {
+    document.getElementById('step-counter').textContent = 'Step 3 of ~3';
+    const resultCard = document.createElement('div');
+    resultCard.className = 'step-card streaming';
+    resultCard.setAttribute('data-type', 'RESULT');
+    resultCard.innerHTML = `
+      <div class="step-summary">
+        <span class="step-badge result">RESULT</span>
+        <span class="step-preview">Generating&hellip;</span>
+        <span class="step-time">${currentTime()}</span>
+      </div>
+      <div class="step-body expanded">
+        <div class="step-body-inner">
+          <div style="margin-bottom:8px"><span class="ai-label" data-ai-source="local AI" onclick="openPopover(this)"><span class="star">&#10022;</span> AI</span></div>
+          <div class="generating"><span>generating</span><span class="dots">&middot;&middot;&middot;</span></div>
+          <div id="stream-output"></div>
+        </div>
+      </div>
+    `;
+    log.appendChild(resultCard);
+    log.scrollTop = log.scrollHeight;
+
+    // Stream text
+    const streamText = "I'm working on this goal now. In the full build, this would stream live results from your browser and local tools. This prototype demonstrates the streaming interface, step-card collapsing, and AI label patterns.";
+    let i = 0;
+    const streamEl = document.getElementById('stream-output');
+    streamEl.innerHTML = '<span class="cursor">&#9608;</span>';
+
+    streamTimer = setInterval(() => {
+      if (i < streamText.length) {
+        streamEl.innerHTML = escapeHtml(streamText.substring(0, i + 1)) + '<span class="cursor">&#9608;</span>';
+        i++;
+        log.scrollTop = log.scrollHeight;
+      } else {
+        clearInterval(streamTimer);
+        // Remove generating indicator, cursor, finish
+        resultCard.querySelector('.generating').remove();
+        streamEl.innerHTML = escapeHtml(streamText);
+        resultCard.classList.remove('streaming');
+        // Add toggle
+        const summary = resultCard.querySelector('.step-summary');
+        const toggle = document.createElement('span');
+        toggle.className = 'step-toggle open';
+        toggle.innerHTML = '&#9658;';
+        summary.appendChild(toggle);
+        summary.onclick = () => toggleStep(summary);
+        // Update preview
+        summary.querySelector('.step-preview').textContent = streamText.substring(0, 60) + '…';
+
+        // Update goal card meta
+        goalCard.querySelector('.goal-header-meta').innerHTML =
+          `Started ${currentTime()} &middot; Completed ${currentTime()} &middot; 3 steps`;
+
+        isRunning = false;
+        setRunning(false);
+        controls.classList.remove('visible');
+      }
+    }, 25);
+  }, 2400);
+}
+
+function createStepCard(type, badgeClass, preview, time, bodyHtml) {
+  const card = document.createElement('div');
+  card.className = 'step-card';
+  card.setAttribute('data-type', type);
+  card.innerHTML = `
+    <div class="step-summary" onclick="toggleStep(this)">
+      <span class="step-badge ${badgeClass}">${type}</span>
+      <span class="step-preview">${preview}</span>
+      <span class="step-time">${time}</span>
+      <span class="step-toggle">&#9658;</span>
+    </div>
+    <div class="step-body">
+      <div class="step-body-inner">${bodyHtml}</div>
+    </div>
+  `;
+  return card;
+}
+
+function expandStepBody(card) {
+  const body = card.querySelector('.step-body');
+  const toggle = card.querySelector('.step-toggle');
+  body.classList.add('expanded');
+  if (toggle) toggle.classList.add('open');
+}
+
+function setRunning(state) {
+  const indicator = document.getElementById('running-indicator');
+  if (state) indicator.classList.remove('hidden');
+  else indicator.classList.add('hidden');
+}
+
+function pauseAgent() {
+  if (streamTimer) { clearInterval(streamTimer); streamTimer = null; }
+  showToast('Agent paused.');
+}
+
+function stopAgent() {
+  if (streamTimer) { clearInterval(streamTimer); streamTimer = null; }
+  isRunning = false;
+  setRunning(false);
+  document.getElementById('controls-row').classList.remove('visible');
+  showToast('Agent stopped.');
+}
+
+function currentTime() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' +
+         now.getMinutes().toString().padStart(2,'0');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---- AI Explainability Popover ----
+function openPopover(triggerEl) {
+  const popover = document.getElementById('ai-popover');
+  const source = triggerEl.dataset.aiSource || 'local AI';
+  document.getElementById('popover-source-val').textContent = source;
+
+  const rect = triggerEl.getBoundingClientRect();
+  popover.classList.remove('hidden');
+
+  // Position near trigger
+  let top = rect.bottom + 8;
+  let left = rect.left;
+  const pw = 320;
+  const ph = popover.offsetHeight || 200;
+
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 8;
+  if (top < 8) top = 8;
+  if (left < 8) left = 8;
+
+  popover.style.top = top + 'px';
+  popover.style.left = left + 'px';
+}
+
+function closePopover() {
+  document.getElementById('ai-popover').classList.add('hidden');
+}
+
+// Click outside popover to close
+document.addEventListener('click', e => {
+  const popover = document.getElementById('ai-popover');
+  if (!popover.classList.contains('hidden') &&
+      !popover.contains(e.target) &&
+      !e.target.classList.contains('ai-label') &&
+      !e.target.closest('.ai-label')) {
+    closePopover();
+  }
+});
+
+// ---- Inbox ----
+function updateInboxBadge() {
+  const badge = document.getElementById('inbox-badge');
+  const unreadBadge = document.getElementById('inbox-unread-badge');
+  const countLabel = document.getElementById('inbox-count-label');
+
+  if (inboxCount > 0) {
+    badge.textContent = inboxCount;
+    badge.classList.remove('hidden');
+    unreadBadge.classList.remove('hidden');
+    countLabel.textContent = inboxCount + ' unread';
+  } else {
+    badge.classList.add('hidden');
+    unreadBadge.classList.add('hidden');
+  }
+}
+
+function dismissInboxItem(id) {
+  const item = document.getElementById('inbox-item-' + id);
+  if (!item) return;
+
+  // Get title for acknowledged list
+  const title = item.querySelector('.inbox-title').textContent;
+  const type = id === 3 ? 'FYI' : (id === 1 ? 'NEEDS INPUT' : 'REVIEW');
+
+  // Animate out
+  item.classList.add('dismissed');
+
+  // Decrement count (not for FYI)
+  if (id !== 3) {
+    inboxCount = Math.max(0, inboxCount - 1);
+    updateInboxBadge();
+  }
+
+  // Add to acknowledged list
+  acknowledgedCount++;
+  acknowledgedItems.push({ title, type });
+  updateAcknowledged();
+}
+
+function updateAcknowledged() {
+  document.getElementById('acknowledged-count').textContent = acknowledgedCount;
+  const list = document.getElementById('acknowledged-list');
+  list.innerHTML = acknowledgedItems.map(it =>
+    `<div class="acknowledged-item">${it.type}: ${it.title}</div>`
+  ).join('');
+}
+
+function rememberIt(id) {
+  showToast('Xneelo added to your memory &#10003;');
+  dismissInboxItem(id);
+}
+
+function resumeTask(id) {
+  showToast('Resuming task&hellip;');
+  setTimeout(() => {
+    navigateTo('goals');
+    dismissInboxItem(id);
+  }, 600);
+}
+
+function markAllReviewed() {
+  // Dismiss all except NEEDS_INPUT items
+  [2, 3].forEach(id => {
+    const item = document.getElementById('inbox-item-' + id);
+    if (item && !item.classList.contains('dismissed')) {
+      dismissInboxItem(id);
+    }
+  });
+}
+
+// ---- Memory tabs ----
+function switchMemoryTab(tab, btnEl) {
+  document.querySelectorAll('.memory-tab').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  document.getElementById('memory-semantic').classList.add('hidden');
+  document.getElementById('memory-episodic').classList.add('hidden');
+  document.getElementById('memory-' + tab).classList.remove('hidden');
+}
+
+// ---- Memory fact editing ----
+function editFact(editBtn) {
+  const row = editBtn.closest('.memory-fact-row');
+  const valCol = row.querySelector('.fact-val-col');
+  const valEl = valCol.querySelector('.fact-value');
+  const originalVal = valEl.dataset.original;
+
+  if (valEl.dataset.editing === 'true') return;
+  valEl.dataset.editing = 'true';
+
+  const currentVal = valEl.textContent;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'fact-edit-input';
+  input.value = currentVal;
+  valEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const revert = document.createElement('span');
+  revert.className = 'fact-revert';
+  revert.textContent = 'Revert to original';
+  revert.style.display = currentVal === originalVal ? 'none' : 'inline-block';
+  valCol.appendChild(revert);
+
+  input.addEventListener('input', () => {
+    revert.style.display = input.value === originalVal ? 'none' : 'inline-block';
+  });
+
+  revert.addEventListener('click', () => {
+    input.value = originalVal;
+    revert.style.display = 'none';
+  });
+
+  function commitEdit() {
+    const newVal = input.value.trim() || originalVal;
+    const newValEl = document.createElement('div');
+    newValEl.className = 'fact-value';
+    newValEl.dataset.original = originalVal;
+    newValEl.textContent = newVal;
+    input.replaceWith(newValEl);
+    if (revert.parentNode) revert.remove();
+  }
+
+  input.addEventListener('blur', commitEdit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = originalVal; input.blur(); }
+  });
+}
+
+// ---- Settings ----
+function testConnection() {
+  const status = document.getElementById('connection-status');
+  status.className = 'connection-status checking';
+  status.innerHTML = '<span class="status-dot"></span><span>Checking&hellip;</span>';
+  setTimeout(() => {
+    status.className = 'connection-status';
+    status.innerHTML = '<span class="status-dot"></span><span>Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context</span>';
+  }, 1500);
+}
+
+let dangerType = null;
+function showDangerConfirm(type) {
+  dangerType = type;
+  const confirm = document.getElementById('danger-confirm');
+  const msg = document.getElementById('danger-message');
+  confirm.classList.remove('hidden');
+  msg.textContent = type === 'memory'
+    ? 'Are you sure? All memory facts and episodic history will be deleted. This cannot be undone.'
+    : 'Are you sure? Zelfi will be reset to factory defaults. This cannot be undone.';
+  const btn = confirm.querySelector('.btn-danger');
+  btn.textContent = type === 'memory' ? 'Yes, clear memory' : 'Yes, reset Zelfi';
+}
+
+function confirmDanger() {
+  showToast(dangerType === 'memory' ? 'Memory cleared.' : 'Zelfi reset to defaults.');
+  cancelDanger();
+}
+
+function cancelDanger() {
+  document.getElementById('danger-confirm').classList.add('hidden');
+  dangerType = null;
+}
+
+// ---- Toast ----
+function showToast(message) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span class="toast-check">&#10003;</span><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 350);
+  }, 3000);
+}
+
+// ---- Init ----
+updateInboxBadge();
+</script>
+</body>
+</html>

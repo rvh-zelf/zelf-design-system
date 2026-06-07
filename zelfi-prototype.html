@@ -1287,6 +1287,94 @@ textarea:focus-visible,
 }
 
 
+
+/* ---- Improvement #11: Step type legend ---- */
+#step-legend {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 16px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--surface-2);
+  flex-shrink: 0;
+  user-select: none;
+}
+#step-legend.legend-collapsed .legend-items {
+  display: none;
+}
+.legend-toggle {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.legend-toggle:hover { color: var(--text-2); }
+.legend-toggle .legend-chevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-style: normal;
+}
+#step-legend.legend-collapsed .legend-chevron {
+  transform: rotate(-90deg);
+}
+.legend-items {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: 8px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  position: relative;
+  cursor: default;
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot.plan   { background: var(--teal); }
+.legend-dot.tool   { background: var(--amber); }
+.legend-dot.result { background: var(--green); }
+.legend-dot.eval   { background: var(--purple); }
+.legend-dot.error  { background: var(--red); }
+.legend-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-3);
+  color: var(--text-1);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 4px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+}
+.legend-item:hover .legend-tooltip { display: block; }
+
 </style>
 </head>
 <body>
@@ -1346,6 +1434,35 @@ textarea:focus-visible,
            VIEW 1 — GOALS
            ============================================================ -->
       <div class="view" id="view-goals">
+        <!-- Improvement #11: Step type legend -->
+        <div id="step-legend" aria-label="Step type key">
+          <button class="legend-toggle" onclick="toggleStepLegend()" title="Toggle legend" aria-expanded="true">
+            <i class="legend-chevron">&#8964;</i>
+            <span>Key</span>
+          </button>
+          <div class="legend-items">
+            <span class="legend-item">
+              <span class="legend-dot plan"></span> PLAN
+              <span class="legend-tooltip">Agent&#39;s reasoning &mdash; how it breaks down the task</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot tool"></span> TOOL
+              <span class="legend-tooltip">Action taken &mdash; a browser, file, or API call</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot result"></span> RESULT
+              <span class="legend-tooltip">Data retrieved &mdash; output from a tool action</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot eval"></span> EVAL
+              <span class="legend-tooltip">Decision made &mdash; agent evaluates progress</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot error"></span> ERROR
+              <span class="legend-tooltip">Something went wrong &mdash; agent will retry or escalate</span>
+            </span>
+          </div>
+        </div>
         <div id="agent-log">
           <!-- Pre-loaded demo goal -->
           <div class="goal-header-card" id="demo-goal-card">
@@ -1988,7 +2105,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9,10] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9,10,11] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2013,6 +2130,16 @@ function navigateTo(view) {
   // Activate nav button
   const navBtn = document.getElementById('nav-' + view);
   if (navBtn) navBtn.classList.add('active');
+
+  // Improvement #11: Step type legend toggle
+  function toggleStepLegend() {
+    const legend = document.getElementById('step-legend');
+    const btn = legend.querySelector('.legend-toggle');
+    const expanded = !legend.classList.contains('legend-collapsed');
+    legend.classList.toggle('legend-collapsed', expanded);
+    btn.setAttribute('aria-expanded', String(!expanded));
+  }
+
   // Improvement #8: update topbar breadcrumb
   const bc = document.getElementById('topbar-breadcrumb');
   if (bc) {

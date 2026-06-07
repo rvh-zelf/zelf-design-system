@@ -138,6 +138,13 @@ html, body {
   align-items: center;
   padding: 8px 0;
   flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+/* Improvement #12: Expanded sidebar */
+#sidebar.sidebar-expanded {
+  width: 160px;
+  align-items: flex-start;
 }
 
 .nav-btn {
@@ -152,14 +159,61 @@ html, body {
   cursor: pointer;
   color: var(--text-2);
   border-left: 3px solid transparent;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, width 0.25s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+  overflow: hidden;
 }
 .nav-btn:hover { background: var(--surface-2); }
 .nav-btn.active {
   border-left-color: var(--teal);
   color: var(--teal);
 }
-.nav-btn svg { width: 20px; height: 20px; }
+.nav-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+/* Improvement #12: nav label text */
+.nav-label {
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-width 0.25s cubic-bezier(0.4,0,0.2,1);
+  color: inherit;
+  letter-spacing: 0.01em;
+}
+#sidebar.sidebar-expanded .nav-btn {
+  width: 160px;
+  justify-content: flex-start;
+  padding-left: 12px;
+}
+#sidebar.sidebar-expanded .nav-label {
+  opacity: 1;
+  max-width: 120px;
+}
+/* Improvement #12: sidebar toggle button */
+#sidebar-toggle {
+  width: 48px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  transition: background 0.15s, color 0.15s, width 0.25s;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+#sidebar-toggle:hover { background: var(--surface-2); color: var(--text-1); }
+#sidebar.sidebar-expanded #sidebar-toggle {
+  width: 160px;
+  justify-content: flex-end;
+  padding-right: 12px;
+}
+#sidebar-toggle svg { width: 14px; height: 14px; transition: transform 0.25s; }
+#sidebar.sidebar-expanded #sidebar-toggle svg { transform: scaleX(-1); }
 
 /* Inbox badge */
 .nav-btn .badge {
@@ -206,6 +260,7 @@ html, body {
   z-index: 200;
 }
 .nav-btn:hover::after { opacity: 1; }
+#sidebar.sidebar-expanded .nav-btn::after { display: none; }
 
 /* ============================================================
    MAIN CONTENT
@@ -1408,22 +1463,31 @@ textarea:focus-visible,
 
     <!-- SIDEBAR -->
     <nav id="sidebar">
+      <!-- Improvement #12: Sidebar expand/collapse toggle -->
+      <button id="sidebar-toggle" title="Expand sidebar" aria-label="Toggle sidebar labels" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
       <button class="nav-btn active" data-view="goals" data-tip="Goals ⌘1" id="nav-goals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span class="nav-label">Goals</span>
       </button>
       <button class="nav-btn" data-view="inbox" data-tip="Inbox ⌘2" id="nav-inbox">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <span class="nav-label">Inbox</span>
         <span class="badge" id="inbox-badge">2</span>
       </button>
       <button class="nav-btn" data-view="history" data-tip="History ⌘3" id="nav-history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span class="nav-label">History</span>
       </button>
       <button class="nav-btn" data-view="memory" data-tip="Memory ⌘4" id="nav-memory">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+        <span class="nav-label">Memory</span>
       </button>
       <div class="nav-spacer"></div>
       <button class="nav-btn" data-view="settings" data-tip="Settings ⌘5" id="nav-settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="nav-label">Settings</span>
       </button>
     </nav>
 
@@ -2105,7 +2169,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9,10,11] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9,10,11,12] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2117,6 +2181,26 @@ let acknowledgedCount = 0;
 let acknowledgedItems = [];
 let dangerAction = null;
 let streamTimer = null;
+
+// ---- Improvement #12: Sidebar expand/collapse toggle ----
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  const stored = localStorage.getItem('zelfi-sidebar-expanded');
+  if (stored === 'true') {
+    sidebar.classList.add('sidebar-expanded');
+  }
+})();
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const expanded = sidebar.classList.toggle('sidebar-expanded');
+  localStorage.setItem('zelfi-sidebar-expanded', String(expanded));
+  const btn = document.getElementById('sidebar-toggle');
+  if (btn) {
+    btn.setAttribute('title', expanded ? 'Collapse sidebar' : 'Expand sidebar');
+    btn.setAttribute('aria-label', expanded ? 'Collapse sidebar labels' : 'Expand sidebar labels');
+  }
+}
 
 // ---- Navigation ----
 function navigateTo(view) {

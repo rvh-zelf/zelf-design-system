@@ -435,6 +435,25 @@ html, body {
   50% { opacity: 0; }
 }
 
+
+/* Skeleton loading placeholder (improvement 9) */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+.skeleton-placeholder {
+  padding: 4px 0;
+  margin-bottom: 4px;
+}
+
 /* Controls row */
 #controls-row {
   display: flex;
@@ -1951,7 +1970,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2121,6 +2140,11 @@ function sendGoal() {
         <div class="step-body-inner">
           <div style="margin-bottom:8px"><span class="ai-label" data-ai-source="local AI" onclick="openPopover(this)"><span class="star">&#10022;</span> AI</span></div>
           <div class="generating"><span>generating</span><span class="dots">&middot;&middot;&middot;</span></div>
+          <div class="skeleton-placeholder" id="skeleton-lines">
+            <div class="skeleton" style="width:100%"></div>
+            <div class="skeleton" style="width:80%"></div>
+            <div class="skeleton" style="width:60%"></div>
+          </div>
           <div id="stream-output"></div>
         </div>
       </div>
@@ -2128,13 +2152,18 @@ function sendGoal() {
     log.appendChild(resultCard);
     log.scrollTop = log.scrollHeight;
 
-    // Stream text
+    // Stream text — wait 400ms (skeleton visible) then start streaming
     const streamText = "I'm working on this goal now. In the full build, this would stream live results from your browser and local tools. This prototype demonstrates the streaming interface, step-card collapsing, and AI label patterns.";
     let i = 0;
     const streamEl = document.getElementById('stream-output');
-    streamEl.innerHTML = '<span class="cursor">&#9608;</span>';
 
-    streamTimer = setInterval(() => {
+    setTimeout(() => {
+      // Remove skeleton, start cursor
+      const skelLines = document.getElementById('skeleton-lines');
+      if (skelLines) skelLines.remove();
+      streamEl.innerHTML = '<span class="cursor">&#9608;</span>';
+
+      streamTimer = setInterval(() => {
       if (i < streamText.length) {
         streamEl.innerHTML = escapeHtml(streamText.substring(0, i + 1)) + '<span class="cursor">&#9608;</span>';
         i++;
@@ -2164,6 +2193,7 @@ function sendGoal() {
         controls.classList.remove('visible');
       }
     }, 25);
+    }, 400); // end skeleton delay setTimeout
   }, 2400);
 }
 

@@ -1025,6 +1025,21 @@ html, body {
   white-space: nowrap;
 }
 .btn-test:hover { background: var(--surface-2); border-color: var(--text-3); }
+.btn-test:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-disconnect {
+  background: transparent;
+  border: 1px solid var(--surface-3);
+  color: var(--text-3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  margin-top: 6px;
+}
+.btn-disconnect:hover { background: var(--surface-2); border-color: var(--text-2); color: var(--text-2); }
 
 .connection-status {
   display: flex;
@@ -1037,6 +1052,8 @@ html, body {
 .connection-status .status-dot { background: var(--green); }
 .connection-status.checking { color: var(--amber); }
 .connection-status.checking .status-dot { background: var(--amber); }
+.connection-status.error { color: var(--red); }
+.connection-status.error .status-dot { background: var(--red); }
 
 .settings-about {
   font-size: 13px;
@@ -1886,8 +1903,9 @@ textarea:focus-visible,
             </div>
             <div class="connection-status" id="connection-status">
               <span class="status-dot"></span>
-              <span>Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context</span>
+              <span>Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context &middot; ~35 tok/s</span>
             </div>
+            <button class="btn-disconnect hidden" id="btn-disconnect" onclick="disconnectLM()">Disconnect</button>
           </div>
 
           <div class="settings-section">
@@ -1970,7 +1988,7 @@ textarea:focus-visible,
 <div id="toast-container"></div>
 
 <script>
-<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9] -->
+<!-- ZELFI-IMPROVEMENTS: [1,2,3,4,5,6,7,8,9,10] -->
 /* ============================================================
    ZELFI — Application JavaScript
    ============================================================ */
@@ -2448,13 +2466,41 @@ function editFact(editBtn) {
 
 // ---- Settings ----
 function testConnection() {
-  const status = document.getElementById('connection-status');
+  const status    = document.getElementById('connection-status');
+  const testBtn   = document.querySelector('.btn-test');
+  const disconnectBtn = document.getElementById('btn-disconnect');
+  const url = document.getElementById('lm-url-input').value.trim() || 'http://127.0.0.1:2323';
+
+  // Disable button and show initial checking state
+  testBtn.disabled = true;
+  disconnectBtn.classList.add('hidden');
   status.className = 'connection-status checking';
-  status.innerHTML = '<span class="status-dot"></span><span>Checking&hellip;</span>';
+  status.innerHTML = '<span class="status-dot"></span><span>&#x25cf; Checking&hellip;</span>';
+
+  // Step 2: show connecting message
+  setTimeout(() => {
+    status.innerHTML = `<span class="status-dot"></span><span>&#x25cf; Connecting to ${url}&hellip;</span>`;
+  }, 800);
+
+  // Step 3: show success
   setTimeout(() => {
     status.className = 'connection-status';
-    status.innerHTML = '<span class="status-dot"></span><span>Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context</span>';
-  }, 1500);
+    status.innerHTML = '<span class="status-dot"></span><span>&#x2713; Connected &middot; Gemma 4 E4B-it MLX 4-bit &middot; 128k context &middot; ~35 tok/s</span>';
+    testBtn.disabled = false;
+    disconnectBtn.classList.remove('hidden');
+  }, 1600);
+}
+
+function disconnectLM() {
+  const status = document.getElementById('connection-status');
+  const disconnectBtn = document.getElementById('btn-disconnect');
+  disconnectBtn.disabled = true;
+  setTimeout(() => {
+    status.className = 'connection-status error';
+    status.innerHTML = '<span class="status-dot"></span><span>Disconnected</span>';
+    disconnectBtn.classList.add('hidden');
+    disconnectBtn.disabled = false;
+  }, 500);
 }
 
 let dangerType = null;
